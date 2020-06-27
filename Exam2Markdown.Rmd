@@ -1,0 +1,109 @@
+---
+title: "Exam 2 Answers"
+author: "JP Reppeto"
+date: "6/26/2020"
+output: pdf_document
+---
+#### Extremely crunched for time so please pardon my numbering on here
+```{r setup, include= TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**1-2:**
+```{r Clear the environment}
+rm(list=ls(all=TRUE))
+
+library(rio)
+inequality_data <- import("inequality.xlsx")
+
+```
+
+
+**3:**
+As this dataset takes information from a specific moment in time 
+(inequality ratings in 2015), we consider it cross-sectional. As the head shows, 
+these are specific observations from a specific moment. 
+
+
+```{r inequality_data}
+head(inequality_data)
+```
+**4-5:**
+```{r}
+#subsetting Denmark, Sweden, and Brazil
+subset(inequality_data, country == "Sweden")
+subset(inequality_data, country == "Denmark")
+subset(inequality_data, country == "Brazil")
+```
+
+**6:**
+It is better to have *lower* gini scores.
+
+**7-9:**
+```{r}
+head(inequality_data)
+
+#remove the accent function
+remove.accents <- function(s) {
+  #single letter
+  old1 <- "ú"
+  new1 <- "u"
+  s1 <- chartr(old1, new1,s)
+}
+
+inequality_data$country <- remove.accents(inequality_data$country)
+
+#checking head
+head(inequality_data)
+#nice
+
+#sorting by low ineq_gni
+lowineq <- inequality_data[order(inequality_data$inequality_gini),]
+
+#head of new data
+head(lowineq)
+```
+
+**10-12:**
+```{r}
+#mean function and mean gini
+mean_function <- function(x)
+{sum(x) / length(x)}
+
+mean_function(inequality_data$inequality_gini)
+
+#ifelse dummy variables
+inequality_data$high_inequality <- ifelse(inequality_data$inequality_gini >= 36.81, 1, 0)
+inequality_data$low_inequality <- ifelse(inequality_data$inequality_gini < 36.81, 1, 0)
+
+#crosstabbing our variables
+library(doBy)
+
+summaryBy(high_inequality ~ low_inequality, 
+          data = inequality_data, FUN= c(mean, length))
+```
+
+**14-17:**
+```{r}
+#importing wdi data
+remotes::install_github('vincentarelbundock/WDI')
+library(WDI)
+
+adult_literacy = WDI(country = "all", 
+                     indicator = c("SE.ADT.LITR.ZS"),
+                     start = 2015, end = 2015, extra = FALSE, cache = NULL)
+
+#renaming
+
+library(data.table)
+
+setnames(adult_literacy, "SE.ADT.LITR.ZS", "Literacy rate, adult total")
+      
+#merging the variable to ineq dataset
+library(tidyverse)
+
+merged_df = left_join(inequality_data, adult_literacy)
+by= c("iso2c", "country", "year")
+```
+         
+
